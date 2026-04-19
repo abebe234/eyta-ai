@@ -1,1 +1,7 @@
 project_id = "wmtgbvtgxdytqyakzocd"
+
+[functions.voice-assistant]
+verify_jwt = false
+
+[functions.vision]
+verify_jwt = false
