@@ -6,7 +6,7 @@ import { getStoredLanguage, setStoredLanguage } from "@/lib/storage";
 import { speak, stopSpeaking, useVoiceListen, vibrate } from "@/hooks/useVoice";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mic, Camera, ScanLine, Languages } from "lucide-react";
+import { Mic, Camera, ScanLine, Play } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "EYTA AI is a fully voice-driven assistant in English, Amharic, and Afaan Oromo that helps visually impaired users navigate, read, and stay safe.",
+          "EYTA AI is a fully hands-free voice assistant in English, Amharic, and Afaan Oromo that helps visually impaired users navigate, read, and stay safe.",
       },
     ],
   }),
@@ -25,96 +25,113 @@ export const Route = createFileRoute("/")({
 function Home() {
   const navigate = useNavigate();
   const [lang, setLang] = useState<Language | null>(null);
-  const [showLangPicker, setShowLangPicker] = useState(false);
+  const [needsStart, setNeedsStart] = useState(false);
   const [status, setStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const [lastReply, setLastReply] = useState("");
-  const greetedRef = useRef(false);
+  const startedRef = useRef(false);
+  const stopLoopRef = useRef(false);
 
   const activeLang: Language = lang ?? "en";
   const { listen } = useVoiceListen(activeLang);
-
-  // Auto greet on first launch and prompt language picker
+  const langRef = useRef<Language>(activeLang);
   useEffect(() => {
-    if (greetedRef.current) return;
-    greetedRef.current = true;
-    const stored = getStoredLanguage();
-    if (!stored) {
-      setShowLangPicker(true);
-      setTimeout(() => {
-        speak(
-          "Welcome to EYTA AI. Please choose your language. English, Amharic, or Afaan Oromo.",
-          "en",
-        );
-      }, 500);
-    } else {
-      setLang(stored);
-      setTimeout(() => speak(t("welcome", stored) + " " + t("tapToSpeak", stored), stored), 400);
-    }
-    return () => stopSpeaking();
-  }, []);
+    langRef.current = activeLang;
+  }, [activeLang]);
 
-  const pickLanguage = async (l: Language) => {
-    setLang(l);
-    setStoredLanguage(l);
-    setShowLangPicker(false);
-    vibrate(40);
-    await speak(t("languageSet", l), l);
+  // ---- Conversation loop (fully hands-free) ----
+  const runConversationLoop = async (l: Language) => {
+    stopLoopRef.current = false;
+    // First prompt
+    await speak(t("welcome", l) + " " + t("describeScene", l) + "?", l);
+    let silentRounds = 0;
+    while (!stopLoopRef.current) {
+      setStatus("listening");
+      vibrate(20);
+      const text = await listen();
+      if (stopLoopRef.current) break;
+      if (!text) {
+        silentRounds++;
+        setStatus("idle");
+        if (silentRounds >= 3) {
+          await speak(t("notUnderstood", langRef.current), langRef.current);
+          silentRounds = 0;
+        }
+        continue;
+      }
+      silentRounds = 0;
+      const handled = await handleVoiceCommand(text);
+      if (handled === "navigated") break; // route changed, stop loop
+    }
   };
 
-  const handleVoiceCommand = async (text: string) => {
-    const normalized = text.toLowerCase().trim();
+  const detectLanguageCommand = async (text: string): Promise<Language | null> => {
+    const n = text.toLowerCase().trim();
+    if (/(amharic|amharigna)/.test(n) || /አማርኛ/.test(text)) return "am";
+    if (/english|englizegna|እንግሊዝኛ/i.test(text)) return "en";
+    if (/(oromo|afaan)/.test(n) || /afaan oromoo/i.test(text)) return "om";
+    return null;
+  };
 
-    if (/(switch|change).*(amharic|amharigna|አማርኛ)/.test(normalized) || /አማርኛ/.test(text)) {
-      await pickLanguage("am");
-      return;
-    }
-    if (/(switch|change).*(english)/.test(normalized)) {
-      await pickLanguage("en");
-      return;
-    }
-    if (/(switch|change).*(oromo|afaan)/.test(normalized) || /afaan oromoo/i.test(text)) {
-      await pickLanguage("om");
-      return;
+  const handleVoiceCommand = async (text: string): Promise<"continue" | "navigated"> => {
+    // Language switching at any time
+    const newLang = await detectLanguageCommand(text);
+    if (newLang && newLang !== langRef.current) {
+      setLang(newLang);
+      setStoredLanguage(newLang);
+      langRef.current = newLang;
+      await speak(t("languageSet", newLang), newLang);
+      return "continue";
     }
 
     if (/(in front|describe|see|scene|ፊቴ|fuula|where am i|object)/i.test(text)) {
-      await speak(t("describeScene", activeLang), activeLang);
+      await speak(t("describeScene", langRef.current), langRef.current);
+      stopLoopRef.current = true;
       navigate({ to: "/camera", search: { mode: "detect" } });
-      return;
+      return "navigated";
     }
     if (/(read|text|አንብብ|dubbisi)/i.test(text)) {
-      await speak(t("readText", activeLang), activeLang);
+      await speak(t("readText", langRef.current), langRef.current);
+      stopLoopRef.current = true;
       navigate({ to: "/camera", search: { mode: "read" } });
-      return;
+      return "navigated";
     }
     if (/(emergency|help me|sos|አደጋ|gargaarsa|balaa)/i.test(text)) {
+      stopLoopRef.current = true;
       navigate({ to: "/emergency" });
-      return;
+      return "navigated";
     }
     if (/(setting|ማስተካከያ|sajoo)/i.test(text)) {
+      stopLoopRef.current = true;
       navigate({ to: "/settings" });
-      return;
+      return "navigated";
     }
     if (/(location|where am i|ቦታ|iddoo)/i.test(text)) {
+      stopLoopRef.current = true;
       navigate({ to: "/location" });
-      return;
+      return "navigated";
+    }
+    if (/(stop|quiet|ዝም|cal|cal'isi)/i.test(text)) {
+      stopLoopRef.current = true;
+      stopSpeaking();
+      setStatus("idle");
+      return "continue";
     }
 
     setStatus("thinking");
     try {
       const { data, error } = await supabase.functions.invoke("voice-assistant", {
-        body: { message: text, language: activeLang },
+        body: { message: text, language: langRef.current },
       });
       if (error) throw error;
       const reply = (data as { reply?: string; error?: string })?.reply ?? "";
       const errMsg = (data as { error?: string })?.error;
       if (errMsg) {
         toast.error(errMsg);
-        await speak(errMsg, activeLang);
+        await speak(errMsg, langRef.current);
       } else if (reply) {
         setLastReply(reply);
         setStatus("speaking");
-        await speak(reply, activeLang);
+        await speak(reply, langRef.current);
       }
     } catch (e) {
       console.error(e);
@@ -123,84 +140,131 @@ function Home() {
     } finally {
       setStatus("idle");
     }
+    return "continue";
   };
 
-  const tapMic = async () => {
-    if (showLangPicker) return;
-    stopSpeaking();
-    vibrate(30);
-    setStatus("listening");
-    await speak(t("listening", activeLang), activeLang);
-    const text = await listen();
-    if (!text) {
-      setStatus("idle");
-      await speak(t("notUnderstood", activeLang), activeLang);
-      return;
+  // ---- Language detection on first launch (voice-only) ----
+  const detectInitialLanguage = async (): Promise<Language> => {
+    // Greet in all three languages briefly, then listen
+    await speak(
+      "Welcome to EYTA AI. Say English, Amharic, or Afaan Oromo to choose your language.",
+      "en",
+    );
+    for (let i = 0; i < 3; i++) {
+      setStatus("listening");
+      const text = await listen();
+      const picked = await detectLanguageCommand(text);
+      if (picked) return picked;
+      await speak("Please say English, Amharic, or Afaan Oromo.", "en");
     }
-    await handleVoiceCommand(text);
+    return "en"; // fallback
   };
 
-  if (showLangPicker) {
+  const startEverything = async () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    setNeedsStart(false);
+    let l = getStoredLanguage();
+    if (!l) {
+      l = await detectInitialLanguage();
+      setLang(l);
+      setStoredLanguage(l);
+      langRef.current = l;
+      await speak(t("languageSet", l), l);
+    } else {
+      setLang(l);
+      langRef.current = l;
+    }
+    await runConversationLoop(l);
+  };
+
+  // Try to auto-start on mount. Browsers may block audio/mic without a gesture;
+  // in that case we expose a single fullscreen Start button.
+  useEffect(() => {
+    let cancelled = false;
+    const tryAutoStart = async () => {
+      try {
+        // Probe TTS — if speechSynthesis is allowed to speak, we're good to go.
+        if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+          setNeedsStart(true);
+          return;
+        }
+        // Attempt mic permission silently; if it throws, we need a user gesture.
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (cancelled) return;
+        await startEverything();
+      } catch {
+        if (!cancelled) setNeedsStart(true);
+      }
+    };
+    tryAutoStart();
+    return () => {
+      cancelled = true;
+      stopLoopRef.current = true;
+      stopSpeaking();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---- Fallback: one-time Start screen if browser blocks autoplay ----
+  if (needsStart) {
     return (
       <AppShell withHeader withBottomNav={false}>
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-          <Languages className="h-16 w-16 text-primary" aria-hidden />
-          <h2 className="text-2xl font-bold text-foreground">Choose your language</h2>
-          <p className="text-base text-muted-foreground">
-            ቋንቋ ይምረጡ · Afaan filadhu
-          </p>
-          <div className="flex w-full flex-col gap-4">
-            {(Object.keys(LANG_NAMES) as Language[]).map((l) => (
-              <button
-                key={l}
-                onClick={() => pickLanguage(l)}
-                className="w-full rounded-2xl py-6 text-2xl font-bold text-primary-foreground shadow-[var(--shadow-warm)] active:scale-[0.98] transition"
-                style={{ background: "var(--gradient-primary)" }}
-              >
-                {LANG_NAMES[l]}
-              </button>
-            ))}
-          </div>
-        </div>
+        <button
+          onClick={startEverything}
+          className="flex flex-1 flex-col items-center justify-center gap-6 rounded-3xl text-center text-primary-foreground"
+          style={{ background: "var(--gradient-primary)" }}
+          aria-label="Start EYTA AI"
+        >
+          <Play className="h-20 w-20" aria-hidden />
+          <span className="text-3xl font-extrabold">Tap anywhere to start</span>
+          <span className="px-6 text-base opacity-90">
+            EYTA AI will then run completely hands-free.
+          </span>
+        </button>
       </AppShell>
     );
   }
 
   const promptLine =
     activeLang === "am"
-      ? 'ይበሉ "ጽሑፍ አንብብ" ወይም "የት ነኝ?"'
+      ? "ይናገሩ — በማንኛውም ጊዜ።"
       : activeLang === "om"
-        ? 'Jedhi "Barreeffama dubbisi" ykn "Eessan jira?"'
-        : 'Say "Read text" or "Where am I?"';
+        ? "Dubbadhu — yeroo kamiyyuu."
+        : "Just speak — anytime.";
 
   return (
     <AppShell withHeader withBottomNav>
-      {/* Tap to Speak card */}
+      {/* Always-listening status card */}
       <section
         className="rounded-3xl bg-card px-6 py-8 shadow-sm"
         style={{ border: "1px solid var(--border)" }}
       >
         <div className="flex flex-col items-center gap-5 text-center">
-          <button
-            onClick={tapMic}
-            aria-label={t("tapToSpeak", activeLang)}
-            className="relative flex h-20 w-20 items-center justify-center rounded-full text-primary-foreground shadow-[var(--shadow-warm)] transition active:scale-95"
+          <div
+            className="relative flex h-20 w-20 items-center justify-center rounded-full text-primary-foreground shadow-[var(--shadow-warm)]"
             style={{ background: "var(--primary)" }}
+            aria-hidden
           >
             {status === "listening" && (
               <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
             )}
-            <Mic className="h-9 w-9" aria-hidden />
-          </button>
+            <Mic className="h-9 w-9" />
+          </div>
           <div>
             <p className="text-2xl font-extrabold text-foreground" aria-live="polite">
               {status === "listening"
                 ? t("listening", activeLang)
                 : status === "thinking"
                   ? t("thinking", activeLang)
-                  : t("tapToSpeak", activeLang)}
+                  : status === "speaking"
+                    ? "…"
+                    : t("listening", activeLang)}
             </p>
             <p className="mt-2 text-base text-muted-foreground">{promptLine}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {LANG_NAMES[activeLang]}
+            </p>
           </div>
           {lastReply && (
             <p className="max-h-28 w-full overflow-auto rounded-xl bg-secondary px-4 py-3 text-left text-sm text-secondary-foreground">
@@ -210,7 +274,7 @@ function Home() {
         </div>
       </section>
 
-      {/* Action rows */}
+      {/* Action rows (still tappable for sighted helpers) */}
       <div className="mt-5 flex flex-col gap-4">
         <ActionRow
           to="/camera"
