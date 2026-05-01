@@ -40,8 +40,8 @@ export const Route = createRootRoute({
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "IntelliGlass AI" },
       { name: "twitter:description", content: "IntelliGlass AI is a voice-controlled mobile assistant for visually impaired users." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fd1141df-f37e-4056-86a9-8564ced715da/id-preview-3c1e7bc8--1cfcd7a7-990b-418a-b7d2-f19ff6cb66c9.lovable.app-1776614519082.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fd1141df-f37e-4056-86a9-8564ced715da/id-preview-3c1e7bc8--1cfcd7a7-990b-418a-b7d2-f19ff6cb66c9.lovable.app-1776614519082.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/3c0fbf39-c6b8-484e-9ab8-a8cf0f852759" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/3c0fbf39-c6b8-484e-9ab8-a8cf0f852759" },
     ],
     links: [
       {
