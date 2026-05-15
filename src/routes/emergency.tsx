@@ -11,11 +11,11 @@ export const Route = createFileRoute("/emergency")({
   component: Emergency,
   head: () => ({
     meta: [
-      { title: "Emergency — EYTA AI" },
+      { title: "Emergency — IntelliGlass AI" },
       {
         name: "description",
         content:
-          "Send an emergency message with your live location to your saved contacts using EYTA AI.",
+          "Send an emergency message with your live location to your saved contacts using IntelliGlass AI.",
       },
     ],
   }),
@@ -44,8 +44,8 @@ function Emergency() {
     : "";
 
   const messageText = coords
-    ? `EYTA AI Emergency: I need help. My location: ${locationUrl}`
-    : `EYTA AI Emergency: I need help. (Location unavailable)`;
+    ? `IntelliGlass AI Emergency: I need help. My location: ${locationUrl}`
+    : `IntelliGlass AI Emergency: I need help. (Location unavailable)`;
 
   const sendSms = (phone: string) => {
     const url = `sms:${encodeURIComponent(phone)}?&body=${encodeURIComponent(messageText)}`;
@@ -65,7 +65,7 @@ function Emergency() {
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-10 w-10" />
           <div>
-            <p className="text-xs uppercase tracking-widest opacity-80">EYTA AI</p>
+          <p className="text-xs uppercase tracking-widest opacity-80">IntelliGlass AI</p>
             <h2 className="text-2xl font-bold">{t("emergency", lang)}</h2>
           </div>
         </div>
