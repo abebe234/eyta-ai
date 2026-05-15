@@ -174,6 +174,34 @@ function Settings() {
           </button>
         </div>
       </section>
+
+      <section className="mt-6 space-y-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Account
+        </h2>
+        {userEmail ? (
+          <div className="rounded-xl bg-card p-4">
+            <p className="text-sm text-muted-foreground">Signed in as</p>
+            <p className="mb-3 truncate text-base font-semibold text-card-foreground">{userEmail}</p>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                speak("Signed out.", lang);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary py-3 text-sm font-semibold text-secondary-foreground"
+            >
+              <LogOut className="h-4 w-4" /> Sign out
+            </button>
+          </div>
+        ) : (
+          <Link
+            to="/login"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-base font-bold text-primary-foreground"
+          >
+            <LogIn className="h-5 w-5" /> Sign in
+          </Link>
+        )}
+      </section>
     </AppShell>
   );
 }
