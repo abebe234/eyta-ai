@@ -7,10 +7,10 @@ interface Props {
 }
 
 /**
- * Red app header with logo tile + EYTA AI title and Amharic tagline,
- * followed by the Ethiopic diamond border. Matches the reference mockup.
+ * Blue app header with logo tile + IntelliGlass AI title,
+ * followed by the diamond border.
  */
-export function EytaHeader({ title = "EYTA AI", subtitle = "እይታ — Your Vision Assistant" }: Props) {
+export function EytaHeader({ title = "IntelliGlass AI", subtitle = "Your Smart Vision Assistant" }: Props) {
   return (
     <header className="w-full" style={{ background: "var(--primary)" }}>
       <div className="mx-auto flex max-w-md items-center gap-4 px-5 pt-8 pb-5">
