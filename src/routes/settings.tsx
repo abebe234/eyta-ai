@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { useLanguage, useSettings } from "@/lib/storage";
 import { LANG_NAMES, type Language, t } from "@/lib/i18n";
 import { speak } from "@/hooks/useVoice";
-import { Trash2, Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Trash2, Plus, LogIn, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   component: Settings,
