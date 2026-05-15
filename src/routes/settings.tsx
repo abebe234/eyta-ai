@@ -26,6 +26,17 @@ function Settings() {
   const [settings, setSettings] = useSettings();
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUserEmail(data.session?.user.email ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUserEmail(session?.user.email ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const addContact = () => {
     if (!newName.trim() || !newPhone.trim()) return;
