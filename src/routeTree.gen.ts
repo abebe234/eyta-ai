@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LocationRouteImport } from './routes/location'
 import { Route as EmergencyRouteImport } from './routes/emergency'
 import { Route as CameraRouteImport } from './routes/camera'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LocationRoute = LocationRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/camera': typeof CameraRoute
   '/emergency': typeof EmergencyRoute
   '/location': typeof LocationRoute
+  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/camera': typeof CameraRoute
   '/emergency': typeof EmergencyRoute
   '/location': typeof LocationRoute
+  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,28 @@ export interface FileRoutesById {
   '/camera': typeof CameraRoute
   '/emergency': typeof EmergencyRoute
   '/location': typeof LocationRoute
+  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/camera' | '/emergency' | '/location' | '/settings'
+  fullPaths:
+    | '/'
+    | '/camera'
+    | '/emergency'
+    | '/location'
+    | '/login'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/camera' | '/emergency' | '/location' | '/settings'
-  id: '__root__' | '/' | '/camera' | '/emergency' | '/location' | '/settings'
+  to: '/' | '/camera' | '/emergency' | '/location' | '/login' | '/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/camera'
+    | '/emergency'
+    | '/location'
+    | '/login'
+    | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +98,7 @@ export interface RootRouteChildren {
   CameraRoute: typeof CameraRoute
   EmergencyRoute: typeof EmergencyRoute
   LocationRoute: typeof LocationRoute
+  LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -86,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/location': {
@@ -124,8 +154,18 @@ const rootRouteChildren: RootRouteChildren = {
   CameraRoute: CameraRoute,
   EmergencyRoute: EmergencyRoute,
   LocationRoute: LocationRoute,
+  LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
