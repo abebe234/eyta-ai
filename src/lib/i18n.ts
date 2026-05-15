@@ -33,9 +33,9 @@ export type Phrase =
 
 export const PHRASES: Record<Phrase, Record<Language, string>> = {
   welcome: {
-    en: "Welcome to IntelliGlass AI.",
-    am: "ወደ IntelliGlass AI እንኳን በደህና መጡ።",
-    om: "Baga gara IntelliGlass AI dhuftan.",
+    en: "Welcome to EYTA AI.",
+    am: "ወደ EYTA AI እንኳን በደህና መጡ።",
+    om: "Baga gara EYTA AI dhuftan.",
   },
   chooseLanguage: {
     en: "Please choose your language. Tap once for English, twice for Amharic, three times for Afaan Oromo.",
