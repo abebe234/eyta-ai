@@ -12,11 +12,11 @@ export const Route = createFileRoute("/")({
   component: Home,
   head: () => ({
     meta: [
-      { title: "IntelliGlass AI — Voice Assistant for the Visually Impaired" },
+      { title: "EYTA AI — Voice Assistant for the Visually Impaired" },
       {
         name: "description",
         content:
-          "IntelliGlass AI is a fully voice-driven assistant in English, Amharic, and Afaan Oromo that helps visually impaired users navigate, read, and stay safe.",
+          "EYTA AI is a fully voice-driven assistant in English, Amharic, and Afaan Oromo that helps visually impaired users navigate, read, and stay safe.",
       },
     ],
   }),
@@ -42,7 +42,7 @@ function Home() {
       setShowLangPicker(true);
       setTimeout(() => {
         speak(
-          "Welcome to IntelliGlass AI. Please choose your language. English, Amharic, or Afaan Oromo.",
+          "Welcome to EYTA AI. Please choose your language. English, Amharic, or Afaan Oromo.",
           "en",
         );
       }, 500);

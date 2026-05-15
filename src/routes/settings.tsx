@@ -10,11 +10,11 @@ export const Route = createFileRoute("/settings")({
   component: Settings,
   head: () => ({
     meta: [
-      { title: "Settings — IntelliGlass AI" },
+      { title: "Settings — EYTA AI" },
       {
         name: "description",
         content:
-          "Adjust language, voice speed, vibration, and emergency contacts in IntelliGlass AI.",
+          "Adjust language, voice speed, vibration, and emergency contacts in EYTA AI.",
       },
     ],
   }),
