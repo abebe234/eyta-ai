@@ -7,7 +7,7 @@ interface Props {
   children: ReactNode;
   title?: string;
   showBack?: boolean;
-  /** When true, render the red EYTA header with the diamond border. */
+  /** When true, render the blue IntelliGlass header with the diamond border. */
   withHeader?: boolean;
   /** When true, render the bottom tab bar. */
   withBottomNav?: boolean;

@@ -18,11 +18,11 @@ export const Route = createFileRoute("/camera")({
   validateSearch: search,
   head: () => ({
     meta: [
-      { title: "Camera — EYTA AI" },
+      { title: "Camera — IntelliGlass AI" },
       {
         name: "description",
         content:
-          "Use your camera with EYTA AI to describe what is in front of you or read printed text aloud.",
+          "Use your camera with IntelliGlass AI to describe what is in front of you or read printed text aloud.",
       },
     ],
   }),

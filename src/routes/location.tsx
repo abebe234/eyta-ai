@@ -9,7 +9,7 @@ export const Route = createFileRoute("/location")({
   component: LocationPage,
   head: () => ({
     meta: [
-      { title: "Location — EYTA AI" },
+      { title: "Location — IntelliGlass AI" },
       { name: "description", content: "Hear your current location read aloud." },
     ],
   }),
